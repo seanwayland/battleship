@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <jmorecfg.h>
 #include <memory.h>
+#include <stdlib.h>
 
 #define STARTMSG "START GAME\n"
 #define POSITIONMSG "POSITIONING SHIPS\n"
@@ -12,6 +13,8 @@
 int messageType = -1;
 int length = 0;
 char input[256];
+boolean number = FALSE;
+
 
 void getMessageType(char array[]) {
 
@@ -53,6 +56,21 @@ void getMessageType(char array[]) {
         messageType = 6;
         printf("\nIt's a shot message");
     }
+
+    for ( int y = 0 ; y < length - 1; y ++){
+        char e = array[y];
+        if (e >= '1' & e <= '9' ) { number = TRUE;}
+        else { number = FALSE; }
+    }
+
+    if (number == TRUE)
+    { messageType = atoi(array);
+    printf("\nIt's a win. Score is %d", messageType );}
+
+
+
+
+
 
 }
 

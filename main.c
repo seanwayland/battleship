@@ -2,6 +2,9 @@
 #include <jmorecfg.h>
 #include <memory.h>
 #include <stdlib.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <zconf.h>
 
 #define STARTMSG "START GAME\n"
 #define POSITIONMSG "POSITIONING SHIPS\n"
@@ -10,10 +13,12 @@
 #define MISSMSG "MISS\n"
 
 
-int messageType = -1;
+long messageType = -1;
 int length = 0;
 char input[256];
 boolean number = FALSE;
+char * endptr;
+
 
 
 void getMessageType(char array[]) {
@@ -64,8 +69,26 @@ void getMessageType(char array[]) {
     }
 
     if (number == TRUE)
-    { messageType = atoi(array);
-    printf("\nIt's a win. Score is %d", messageType );}
+    { messageType = strtol(array, &endptr, 10);
+    printf("\nIt's a win. Score is %d", messageType );
+
+        /* test return to number and errno values */
+        if (array == endptr)
+            printf (" number : %lu  invalid  (no digits found 0 returned)\n", messageType);
+        else if (errno == ERANGE && number == LONG_MIN)
+            printf (" number : %lu  invalid  (underflow occurred)\n", messageType);
+        else if (errno == ERANGE && number == LONG_MAX)
+            printf (" number : %lu  invalid  (overflow occurred)\n", messageType);
+        else if (errno == EINVAL)  /* not in all c99 implementations - gcc OK */
+            printf (" number : %lu  invalid  (base contains unsupported value)\n", messageType);
+        else if (errno != 0 && number == 0)
+            printf (" number : %lu  invalid  (unspecified error occurred)\n", messageType);
+        else if (errno == 0 && array && !*endptr)
+            printf (" number : %lu    valid  (and represents all characters read)\n", messageType);
+        else if (errno == 0 && array && *endptr != 0)
+            printf (" number : %lu    valid  (but additional characters remain)\n", messageType);
+
+    }
 
 
 

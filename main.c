@@ -21,15 +21,18 @@ char input[256];
 boolean number = FALSE;
 char * endptr;
 int board [9][9];
+int shotBoard[9][9];
 int numShots = 0;
 int shipPlaced;
 
 /// set board to empty
 void initializeBoard() {
 
-    for ( int i = 0; i < 9 ; i ++ ){
-        for ( int j = 0 ; j < 9 ; j++)
+    for ( int i = 0; i < 9 ; i ++ ) {
+        for (int j = 0; j < 9; j++) {
             board[i][j] = 0;
+            shotBoard[i][j] = 0;
+        }
     }
 
 }
@@ -68,6 +71,21 @@ void printBoard(){
     }
 }
 
+void printShotBoard(){
+    printf("\nBOARD");
+    printf("\n");
+    {
+        printf("\n* A B C D E F G H I");
+    }
+    for ( int i = 0; i < 9; i++){
+        printf("\n%d", i + 1);
+        for (int j = 0; j < 9; j++){
+            printf(" %d", shotBoard[i][j]);
+        }
+
+    }
+}
+
 void shoot(){
     int row = input[0] - 64 - 1; // convert uppercase letter to row
     //printf("\nrow %d", row);
@@ -77,12 +95,17 @@ void shoot(){
     if (board[col][row] > 0) {
         board[col][row] = 0;
         printf("\nHIT");
-        printBoard();
+        shotBoard[col][row] = 2;
+
+
 
     }
     else {
-        printf("/nMISS");
+        printf("\nMISS");
+        shotBoard[col][row] = 1;
     }
+
+    printShotBoard();
 
 }
 /// stick a ship on the board
@@ -182,7 +205,7 @@ void getMessageType(char array[]) {
 
     if ((d >= '1' & d <= '9') & (c >= 'A' & c <= 'J') & (length < 4)) {
         messageType = 6;
-        printf("\nIt's a shot message");
+        //printf("\nIt's a shot message");
     }
 
     for ( int y = 0 ; y < length - 1; y ++){
@@ -248,7 +271,7 @@ int main() {
         }
     }
 
-    printBoard();
+    //printBoard();
 
 
 

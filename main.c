@@ -87,25 +87,27 @@ void printShotBoard(){
 }
 
 void shoot(){
-    int row = input[0] - 64 - 1; // convert uppercase letter to row
-    //printf("\nrow %d", row);
-    int col = input[1] - '0' - 1;
-    //printf("\ncol %d", col);
+    if (messageType == 6) {
+        int row = input[0] - 64 - 1; // convert uppercase letter to row
+        //printf("\nrow %d", row);
+        int col = input[1] - '0' - 1;
+        //printf("\ncol %d", col);
 
-    if (board[col][row] > 0) {
-        board[col][row] = 0;
-        printf("\nHIT");
-        shotBoard[col][row] = 2;
+        if (board[col][row] > 0) {
+            board[col][row] = 0;
+            printf("\nHIT");
+            shotBoard[col][row] = 2;
 
 
+        } else {
+            printf("\nMISS");
+            shotBoard[col][row] = 1;
+        }
 
+        printShotBoard();
     }
-    else {
-        printf("\nMISS");
-        shotBoard[col][row] = 1;
-    }
 
-    printShotBoard();
+    else {}
 
 }
 /// stick a ship on the board
@@ -174,29 +176,29 @@ void getMessageType(char array[]) {
 
 
     if (strcmp(array, HITMSG) == 0) {
-        //printf("\nIt's a hit");
+        printf("\nIt's a hit");
         messageType = 4;
 
     }
 
     if (strcmp(array, MISSMSG) == 0) {
-       // printf("\nIt's a miss");
+       printf("\nIt's a miss");
         messageType = 5;
 
     }
 
     if (strcmp(array, STARTMSG) == 0) {
-        //printf("\nIt's a start message");
+        printf("\nIt's a start message");
         messageType = 1;
     }
 
     if (strcmp(array, POSITIONMSG) == 0) {
-       // printf("\nIt's a positioning ships message");
+        printf("\nIt's a positioning ships message");
         messageType = 2;
     }
 
     if (strcmp(array, INPOSITIONMSG) == 0) {
-        //printf("\nIt's a positioning ships message");
+        printf("\nIt's a positioning ships message");
         messageType = 3;
     }
 
@@ -205,14 +207,24 @@ void getMessageType(char array[]) {
 
     if ((d >= '1' & d <= '9') & (c >= 'A' & c <= 'J') & (length < 4)) {
         messageType = 6;
-        //printf("\nIt's a shot message");
+        printf("\nIt's a shot message");
     }
 
+
+    if ((d >= '1' & d <= '9') & (c >= '1' & c <= '9') & (length < 4)) {
+        messageType = 7;
+        printf("\nIt's a score message");
+    }
+
+
+
+    /*
     for ( int y = 0 ; y < length - 1; y ++){
         char e = array[y];
         if (e >= '1' & e <= '9' ) { number = TRUE;}
         else { number = FALSE; }
     }
+     */
 
     /***
     if (number == TRUE)
@@ -286,11 +298,9 @@ int main() {
         printf("\nEnter a shot\n");
         fgets(input, 256, stdin);
         getMessageType(input);
-        if (messageType != 6){
-            printf("\nNot a shot message game will terminate");
-            break;
-
-        }
+        if (messageType < 1) {
+            printf("\nInvalid message");
+            break ; }
         shoot();
         gameOver = scanBoard();
         initializeInput();
@@ -299,8 +309,7 @@ int main() {
     printf("\nGAME OVER ... Number of Shots is %d", numShots);
 
 
-    //getMessageType(input);
-    //if (messageType < 1) { printf("\nInvalid message"); }
+
 
     return 0;
 }

@@ -1,7 +1,21 @@
-//
-// Created by sean on 3/23/19.
-//
-// Client side C/C++ program to demonstrate Socket programming
+#include <unistd.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <string.h>
+#define PORT 8080
+#define MAX 80
+
+#include <stdio.h>
+#include <jmorecfg.h>
+#include <memory.h>
+#include <stdlib.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <zconf.h>
+#include <time.h>
+
 #include <stdio.h>
 #include <sys/socket.h>
 #include <stdlib.h>
@@ -12,30 +26,162 @@
 #define PORT 8080
 #define MAX 80
 
+#define STARTMSG "START GAME\n"
+#define POSITIONMSG "POSITIONING SHIPS\n"
+#define INPOSITIONMSG "SHIPS IN POSITION\n"
+#define HITMSG "HIT\n"
+#define MISSMSG "MISS\n"
+#define EXITMSG "EXIT\n"
+
+
+
+
+
+long messageType = -1;
+int length = 0;
+char input[256];
+boolean number = FALSE;
+char * endptr;
+int board [9][9];
+//int shotBoard[9][9];
+int numShots = 0;
+int shipPlaced;
+char buff[MAX];
+int gameState; // variable to track game position
+/// 0 is not started
+/// 1 is start message sent
+/// 2 is positioning ships
+/// 3 is ships in position
+/// 4 is playing game
+int n;
+//char response[MAX];
+
+
+
+
+int getMessageType(char array[]) {
+
+
+    length = strlen(array);
+
+
+
+    char c = array[0];
+    char d = array[1];
+
+    if (array[0] == '\0') { return 9; }
+
+    else if (strcmp(array, HITMSG) == 0) {
+        printf("\nIt's a hit");
+        return 4;
+    }
+
+    else if (strcmp(array, MISSMSG) == 0) {
+        printf("\nIt's a miss\n");
+        return 5;
+    }
+
+
+
+    else if (strcmp(array, POSITIONMSG) == 0) {
+        printf("\nIt's a positioning ships message\n");
+        return 2;
+    }
+
+    else if (strcmp(array, INPOSITIONMSG) == 0) {
+        printf("\nIt's a positioning ships message\n");
+        return 3;
+    }
+
+    else if (strcmp(array, EXITMSG) == 0) {
+        printf("\nIt's an exit message\n");
+        return 8;
+    }
+
+
+
+    else { return -1;}
+}
 
 void func(int sockfd)
 {
     char buff[MAX];
     int n;
     for (;;) {
-        bzero(buff, sizeof(buff));
-        printf("Enter the string : ");
-        n = 0;
-        while ((buff[n++] = getchar()) != '\n')
-            ;
-        write(sockfd, buff, sizeof(buff));
-        bzero(buff, sizeof(buff));
-        read(sockfd, buff, sizeof(buff));
-        printf("From Server : %s", buff);
-        if ((strncmp(buff, "exit", 4)) == 0) {
-            printf("Client Exit...\n");
-            break;
+
+        if (gameState == 0)
+        {
+            bzero(buff, sizeof(buff));
+            printf("Enter the string : ");
+            n = 0;
+            while ((buff[n++] = getchar()) != '\n');
+            write(sockfd, buff, sizeof(buff));
+            bzero(buff, sizeof(buff));
+            read(sockfd, buff, sizeof(buff));
+            printf("From Server : %s", buff);
+            gameState = 1;
+            int type = getMessageType(buff);
+            if (type == 8 || type < 0) {
+                printf("Client Exit...\n");
+                break;
+            }
+
         }
-    }
+
+        if (gameState == 1)
+        {
+
+            write(sockfd, buff, sizeof(buff));
+            bzero(buff, sizeof(buff));
+            read(sockfd, buff, sizeof(buff));
+            printf("From Server : %s", buff);
+            int type = getMessageType(buff);
+            if (type == 8 || type < 0) {
+                printf("Client Exit...\n");
+                break;
+            }
+            if (type == 3) {
+                printf("\nGame Ready ... \n");
+                gameState = 2;
+                bzero(buff, sizeof(buff));
+            }
+
+        }
+
+
+        if (gameState == 2)
+        {
+            bzero(buff, sizeof(buff));
+            printf("Enter the string : ");
+            n = 0;
+            while ((buff[n++] = getchar()) != '\n');
+            write(sockfd, buff, sizeof(buff));
+            bzero(buff, sizeof(buff));
+            read(sockfd, buff, sizeof(buff));
+            printf("From Server : %s", buff);
+            gameState = 1;
+            int type = getMessageType(buff);
+            if (type == 8 || type < 0) {
+                printf("Client Exit...\n");
+                break;
+            }
+
+        }
+
+
+
+
+
+
+
+    } /*** END MAIN LOOP ***/
 }
+
 
 int main(int argc, char const *argv[])
 {
+
+    gameState = 0; // starting !!
 
     /*** basic connection stuff from here :
      * https://www.geeksforgeeks.org/tcp-server-client-implementation-in-c/
@@ -92,4 +238,3 @@ int main(int argc, char const *argv[])
      ***/
     return 0;
 }
-

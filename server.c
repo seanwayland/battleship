@@ -1,8 +1,3 @@
-//
-// Created by sean on 3/23/19.
-//
-
-// Server side C/C++ program to demonstrate Socket programming
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -12,12 +7,169 @@
 #define PORT 8080
 #define MAX 80
 
+#include <stdio.h>
+#include <jmorecfg.h>
+#include <memory.h>
+#include <stdlib.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <zconf.h>
+#include <time.h>
+
+#define STARTMSG "START GAME\n"
+#define POSITIONMSG "POSITIONING SHIPS\n"
+#define INPOSITIONMSG "SHIPS IN POSITION\n"
+#define HITMSG "HIT\n"
+#define MISSMSG "MISS\n"
+#define EXITMSG "EXIT\n"
+
+
+
+
+
+long messageType = -1;
+int length = 0;
+char input[256];
+boolean number = FALSE;
+char * endptr;
+int board [9][9];
+//int shotBoard[9][9];
+int numShots = 0;
+int shipPlaced;
+char buff[MAX];
+int playStage = 0;
+int n;
+//char response[MAX];
+
+
 
 // Function designed for chat between client and server.
+
+
+
+
+
+/***
+ * 0 is waiting for client to press start
+ * 1 is waiting for positioning ships
+ * 2 is waiting for ships in position
+ * 3 is waiting for shots
+ *    shot received,  hit , miss
+ * 4 is game is over
+ *
+ */
+
+int getMessageType(char array[]) {
+
+
+    length = strlen(array);
+
+    char c = array[0];
+    char d = array[1];
+
+    if ( array[0] == '\0') { return 9;}
+
+    else if (strcmp(array, STARTMSG) == 0) {
+        printf("\nIt's a start message");
+        return 1;
+    }
+
+
+    else if (strcmp(array, EXITMSG) == 0) {
+        printf("\nIt's an exit message");
+        return 8;
+    }
+
+
+    else if ((d >= '1' & d <= '9') & (c >= 'A' & c <= 'J') & (length < 4)) {
+        printf("\nIt's a shot message");
+        return 6;
+
+    }
+
+    else if (strcmp(array, "") == 0)
+    {
+        return 9;
+    }
+
+    else { return -1;}
+}
+
+
+/// set board to empty
+void initializeBoard() {
+
+    for ( int i = 0; i < 9 ; i ++ ) {
+        for (int j = 0; j < 9; j++) {
+            board[i][j] = 0;
+            //shotBoard[i][j] = 0;
+        }
+    }
+
+}
+
+
+
+
+/// stick a ship on the board
+/// returns a one when finished
+int placeShip(int size){
+    int result = 0;
+    int direction = rand() & 1; // 0 is vertical 1 is horizontal
+    /// horizontal is a row
+    /// [row][columns]
+    /// a horizontal row is represented by [x][0] [x][1] [x][2] [x][3] ..
+    /// a vertical column is represented by [0][y] [1][y] [2][y]
+    int rowColNumber = rand() % 9; // generate random row or column number
+    int pos = rand() % 9 ; // generate random position
+
+    /// if it's horizontal check the row for space
+    if (direction == 1){
+        /// if row doesn't have space for ship beyond position reset
+        if ((8 - pos)  < size ) {
+            pos = 8 - size;
+        }
+        /// check for free space
+        int freeSpace = 0;
+        for ( int j = 0 ; j < size ; j ++){
+            freeSpace = freeSpace +  board[rowColNumber][pos + j];
+        }  /// if there is enough space then place ship
+        if (freeSpace == 0) {
+            for ( int j = 0 ; j < size ; j ++){
+                board[rowColNumber][pos + j] = size ;
+            }
+            result = 1; /// ship has been placed
+            //printf("\nShip Placed, size is %d direction is %d ", size, direction);
+        }
+    }
+
+    /// if it's vertical check the column for space
+    if (direction == 0){
+        /// if column doesn't have space for ship beyond position reset
+        if ((8 - pos)  < size ) {
+            pos = 8 - size;
+        }
+        int freeSpace = 0;
+        for ( int j = 0 ; j < size ; j ++){
+            freeSpace = freeSpace +  board[pos + j][rowColNumber];
+        }  /// if there is enough space then place ship
+        if (freeSpace == 0) {
+            for ( int j = 0 ; j < size ; j ++){
+                board[pos+j][rowColNumber] = size ;
+            }
+            result = 1; /// ship has been placed
+            //printf("\nShip Placed, size is %d direction is %d ", size, direction);
+        }
+    }
+
+    return result;
+}
+
+
+
 void func(int sockfd)
 {
-    char buff[MAX];
-    int n;
+
     // infinite loop for chat
     for (;;) {
         bzero(buff, MAX);
@@ -25,20 +177,48 @@ void func(int sockfd)
         // read the message from client and copy it in buffer
         read(sockfd, buff, sizeof(buff));
         // print buffer which contains the client contents
+        int type = getMessageType(buff);
         printf("From client: %s\t To client : ", buff);
-        bzero(buff, MAX);
-        n = 0;
+
+          n = 0;
+        bzero(buff, sizeof(buff));
         // copy server message in the buffer
-        while ((buff[n++] = getchar()) != '\n');
+
 
         // and send that buffer to client
-        write(sockfd, buff, sizeof(buff));
+        //write(sockfd, buff, sizeof(buff));
 
-        // if msg contains "Exit" then server exit and chat ended.
-        if (strncmp("exit", buff, 4) == 0) {
+
+        if (type == 8 || type < 0 ) {
             printf("Server Exit...\n");
+
+            char die[] = EXITMSG;
+            write(sockfd, die, sizeof(die));
+
             break;
         }
+
+        else if ( type == 1){
+            srand(time(0));
+            initializeBoard();
+            printf("\ninitializing board");
+            char response[] = POSITIONMSG;
+            write(sockfd, response, sizeof(response));
+            bzero(buff, MAX);
+            for ( int i = 2; i < 6; i ++) {
+                shipPlaced = 0;
+                // place a ship of size 2
+                while (shipPlaced == 0) {
+                    shipPlaced = placeShip(i);
+                }
+            }
+            printf("\nboard finished");
+            char response2[] = INPOSITIONMSG;
+            write(sockfd, response2, sizeof(response2));
+            bzero(buff, MAX);
+
+        }
+
     }
 }
 

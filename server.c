@@ -33,7 +33,7 @@ char input[256];
 boolean number = FALSE;
 char * endptr;
 int board [9][9];
-//int shotBoard[9][9];
+int shotBoard[9][9];
 int numShots = 0;
 int shipPlaced;
 char buff[MAX];
@@ -46,7 +46,60 @@ int n;
 // Function designed for chat between client and server.
 
 
+int scanBoard() {
+    int result = 1;
+    for ( int i = 0; i < 9 ; i ++ ){
+        for ( int j = 0 ; j < 9 ; j++)
+            if (board[i][j] != 0){
+                result = 0;
+            }
+    }
+    return result;
+}
 
+void printShotBoard(){
+    printf("\nBOARD");
+    printf("\n");
+    {
+        printf("\n* A B C D E F G H I");
+    }
+    for ( int i = 0; i < 9; i++){
+        printf("\n%d", i + 1);
+        for (int j = 0; j < 9; j++){
+            printf(" %d", shotBoard[i][j]);
+        }
+
+    }
+}
+
+int shoot(){
+     {
+        int row = buff[0] - 64 - 1; // convert uppercase letter to row
+        //printf("\nrow %d", row);
+        int col = buff[1] - '0' - 1;
+        //printf("\ncol %d", col);
+
+        if (board[col][row] > 0) {
+            board[col][row] = 0;
+            printf("\nHIT");
+            //shotBoard[col][row] = 2;
+            //printShotBoard();
+            return 1;
+
+
+        } else {
+            printf("\nMISS");
+            //shotBoard[col][row] = 1;
+            //printShotBoard();
+            return 2;
+        }
+
+
+    }
+
+
+
+}
 
 
 /***
@@ -58,6 +111,21 @@ int n;
  * 4 is game is over
  *
  */
+
+void printBoard(){
+    printf("\nBOARD");
+    printf("\n");
+    {
+        printf("\n* A B C D E F G H I");
+    }
+    for ( int i = 0; i < 9; i++){
+        printf("\n%d", i + 1);
+        for (int j = 0; j < 9; j++){
+            printf(" %d", board[i][j]);
+        }
+
+    }
+}
 
 int getMessageType(char array[]) {
 
@@ -180,8 +248,8 @@ void func(int sockfd)
         int type = getMessageType(buff);
         printf("From client: %s\t To client : ", buff);
 
-          n = 0;
-        bzero(buff, sizeof(buff));
+        n = 0;
+        //bzero(buff, sizeof(buff));
         // copy server message in the buffer
 
 
@@ -199,9 +267,10 @@ void func(int sockfd)
         }
 
         else if ( type == 1){
+
             srand(time(0));
-            initializeBoard();
             printf("\ninitializing board");
+            printBoard();
             char response[] = POSITIONMSG;
             write(sockfd, response, sizeof(response));
             bzero(buff, MAX);
@@ -212,12 +281,57 @@ void func(int sockfd)
                     shipPlaced = placeShip(i);
                 }
             }
-            printf("\nboard finished");
+            printf("\nboard finished\n");
             char response2[] = INPOSITIONMSG;
             write(sockfd, response2, sizeof(response2));
-            bzero(buff, MAX);
+           // bzero(buff, MAX);
 
         }
+
+        else if ( type == 6){
+
+            int win = scanBoard();
+            if (win ==0){
+                numShots ++;
+                char response6[] = "55\n";
+                write(sockfd, response6, sizeof(response6));
+            }
+
+            printf("\nchecking shot\n");
+            int shot = shoot();
+
+            if (shot == 1 && win !=0 ) {
+                numShots ++;
+                //int win = scanBoard();
+                //if (win == 0){
+
+                 //   char response6[] = "55\n";
+                 //   printf("\nNumshots %d", numShots);
+                 //   write(sockfd, response6, sizeof(response6));
+
+                //}
+                //else{
+                char response3[] = HITMSG;
+                write(sockfd, response3, sizeof(response3));
+            }
+
+            if (shot == 2 && win !=0) {
+                numShots++;
+                char response2[] = MISSMSG;
+                write(sockfd, response2, sizeof(response2));
+            }
+
+
+
+
+
+
+        }
+
+
+
+
+        bzero(buff, sizeof(buff));
 
     }
 }
@@ -232,6 +346,7 @@ void func(int sockfd)
 
 int main(int argc, char const *argv[])
 {
+    initializeBoard();
     int server_fd, new_socket, valread;
     struct sockaddr_in address;
     int opt = 1;

@@ -43,7 +43,7 @@ char input[256];
 boolean number = FALSE;
 char * endptr;
 int board [9][9];
-//int shotBoard[9][9];
+int shotBoard[9][9];
 int numShots = 0;
 int shipPlaced;
 char buff[MAX];
@@ -131,7 +131,7 @@ void func(int sockfd)
         if (gameState == 1)
         {
 
-            write(sockfd, buff, sizeof(buff));
+            //write(sockfd, buff, sizeof(buff));
             bzero(buff, sizeof(buff));
             read(sockfd, buff, sizeof(buff));
             printf("From Server : %s", buff);
@@ -151,28 +151,29 @@ void func(int sockfd)
 
         if (gameState == 2)
         {
+            //write(sockfd, buff, sizeof(buff));
             bzero(buff, sizeof(buff));
             printf("Enter the string : ");
             n = 0;
             while ((buff[n++] = getchar()) != '\n');
             write(sockfd, buff, sizeof(buff));
+
+
             bzero(buff, sizeof(buff));
             read(sockfd, buff, sizeof(buff));
             printf("From Server : %s", buff);
-            gameState = 1;
+
+
+
             int type = getMessageType(buff);
             if (type == 8 || type < 0) {
                 printf("Client Exit...\n");
                 break;
             }
 
+
+
         }
-
-
-
-
-
-
 
     } /*** END MAIN LOOP ***/
 }

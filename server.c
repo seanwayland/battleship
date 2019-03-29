@@ -138,19 +138,19 @@ int getMessageType(char array[]) {
     if ( array[0] == '\0') { return 9;}
 
     else if (strcmp(array, STARTMSG) == 0) {
-        printf("\nIt's a start message");
+        printf("\nserver found It's a start message");
         return 1;
     }
 
 
     else if (strcmp(array, EXITMSG) == 0) {
-        printf("\nIt's an exit message");
+        printf("\nserver found It's an exit message");
         return 8;
     }
 
 
     else if ((d >= '1' & d <= '9') & (c >= 'A' & c <= 'J') & (length < 4)) {
-        printf("\nIt's a shot message");
+        printf("\nserver found It's a shot message");
         return 6;
 
     }
@@ -284,44 +284,53 @@ void func(int sockfd)
             printf("\nboard finished\n");
             char response2[] = INPOSITIONMSG;
             write(sockfd, response2, sizeof(response2));
-           // bzero(buff, MAX);
+            bzero(buff, MAX);
 
         }
 
         else if ( type == 6){
 
-            int win = scanBoard();
-            if (win ==0){
-                numShots ++;
-                char response6[] = "55\n";
-                write(sockfd, response6, sizeof(response6));
-            }
+
+
+
 
             printf("\nchecking shot\n");
             int shot = shoot();
 
-            if (shot == 1 && win !=0 ) {
+            if (shot == 1  ) {
                 numShots ++;
-                //int win = scanBoard();
-                //if (win == 0){
+                int win = scanBoard();
+                if (win == 1 ){
+                    numShots ++;
+                    char response6[MAX];
+                    sprintf(response6, "%d", numShots);
 
-                 //   char response6[] = "55\n";
-                 //   printf("\nNumshots %d", numShots);
-                 //   write(sockfd, response6, sizeof(response6));
+                    printf("You WIN ...\n");
 
-                //}
-                //else{
+                    write(sockfd, response6, sizeof(response6));
+                    printf("Server Exit...\n");
+
+
+
+                }
                 char response3[] = HITMSG;
                 write(sockfd, response3, sizeof(response3));
+                printBoard();
             }
 
-            if (shot == 2 && win !=0) {
+            else if (shot == 2 ) {
                 numShots++;
                 char response2[] = MISSMSG;
                 write(sockfd, response2, sizeof(response2));
+                printBoard();
             }
 
+            else {
+                printf("Server Exit...\n");
+                char die[] = EXITMSG;
+                write(sockfd, die, sizeof(die));
 
+            }
 
 
 

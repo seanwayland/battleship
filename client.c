@@ -32,6 +32,7 @@
 #define HITMSG "HIT\n"
 #define MISSMSG "MISS\n"
 #define EXITMSG "EXIT\n"
+#define WINMSG "WIN\n"
 
 
 
@@ -81,6 +82,12 @@ int getMessageType(char array[]) {
         return 5;
     }
 
+    else if ((d >= '1' & d <= '9') & (c >= '1' & c <= '9') & (length < 4)) {
+        printf("\nIt's a score message");
+        return 6;
+    }
+
+
 
 
     else if (strcmp(array, POSITIONMSG) == 0) {
@@ -125,14 +132,16 @@ void func(int sockfd)
                 printf("Client Exit...\n");
                 break;
             }
+            bzero(buff, sizeof(buff));
+
 
         }
 
         if (gameState == 1)
         {
 
-            //write(sockfd, buff, sizeof(buff));
-            bzero(buff, sizeof(buff));
+           // write(sockfd, buff, sizeof(buff));
+           // bzero(buff, sizeof(buff));
             read(sockfd, buff, sizeof(buff));
             printf("From Server : %s", buff);
             int type = getMessageType(buff);
@@ -140,11 +149,17 @@ void func(int sockfd)
                 printf("Client Exit...\n");
                 break;
             }
-            if (type == 3) {
+            else if (type == 2) {
+                bzero(buff, sizeof(buff));
+                gameState = 1;
+            }
+            else if (type == 3) {
                 printf("\nGame Ready ... \n");
                 gameState = 2;
                 bzero(buff, sizeof(buff));
             }
+
+            else { }
 
         }
 
@@ -163,13 +178,26 @@ void func(int sockfd)
             read(sockfd, buff, sizeof(buff));
             printf("From Server : %s", buff);
 
-
-
+            /// if win message
             int type = getMessageType(buff);
+            if (type == 6) {
+                printf("\nyou win ... \n");
+                printf("\nscore is  ... %s ", buff );
+                printf("Client Exit...\n");
+                char response[] = EXITMSG;
+                write(sockfd, response, sizeof(response));
+                //break;
+            }
+
+
+
+
             if (type == 8 || type < 0) {
                 printf("Client Exit...\n");
                 break;
             }
+
+
 
 
 

@@ -48,6 +48,7 @@ int shotBoard[9][9];
 int numShots = 0;
 int shipPlaced;
 char buff[MAX];
+char lastShot[MAX];
 int gameState; // variable to track game position
 /// 0 is not started
 /// 1 is start message sent
@@ -57,7 +58,35 @@ int gameState; // variable to track game position
 int n;
 //char response[MAX];
 
+/// set board to empty
+void initializeBoard() {
 
+    for ( int i = 0; i < 9 ; i ++ ) {
+        for (int j = 0; j < 9; j++) {
+            board[i][j] = 0;
+            shotBoard[i][j] = 0;
+        }
+    }
+
+}
+
+
+void printShotBoard(){
+    printf("\nBOARD");
+    printf("\n");
+    {
+        printf("\n1 is a miss, 2 is a hit, 0 is unused shot");
+        printf("\n* A B C D E F G H I");
+    }
+    for ( int i = 0; i < 9; i++){
+        printf("\n%d", i + 1);
+        for (int j = 0; j < 9; j++){
+            printf(" %d", shotBoard[i][j]);
+        }
+
+    }
+    printf("\n");
+}
 
 
 int getMessageType(char array[]) {
@@ -145,17 +174,18 @@ void func(int sockfd)
             read(sockfd, buff, sizeof(buff));
             printf("From Server : %s", buff);
             int type = getMessageType(buff);
-            if (type == 8 || type < 0) {
+            if (type == 3) {
+                printf("\nGame Ready ... \n");
+                gameState = 2;
+                bzero(buff, sizeof(buff));
+            }
+            else if (type == 8 || type < 0) {
                 printf("Client Exit...\n");
                 break;
             }
             else if (type == 2) {
-                bzero(buff, sizeof(buff));
-                gameState = 1;
-            }
-            else if (type == 3) {
-                printf("\nGame Ready ... \n");
-                gameState = 2;
+
+                //gameState = 1;
                 bzero(buff, sizeof(buff));
             }
 
@@ -164,14 +194,17 @@ void func(int sockfd)
         }
 
 
-        if (gameState == 2)
+        else if (gameState == 2)
         {
             //write(sockfd, buff, sizeof(buff));
             bzero(buff, sizeof(buff));
+            printf("\n");
             printf("Enter the string : ");
             n = 0;
             while ((buff[n++] = getchar()) != '\n');
             write(sockfd, buff, sizeof(buff));
+            strncpy(lastShot, buff, MAX);
+
 
 
             bzero(buff, sizeof(buff));
@@ -189,6 +222,31 @@ void func(int sockfd)
                 //break;
             }
 
+            if (type == 4) {
+                /// hit
+                /// store on shotBoard
+                int row = lastShot[0] - 64 - 1; // convert uppercase letter to row
+                int col = lastShot[1] - '0' - 1;
+
+                shotBoard[col][row] = 2;
+                printShotBoard();
+
+                }
+
+
+            if (type == 5 ) {
+                /// miss
+                /// store on shotBoard
+                int row = lastShot[0] - 64 - 1; // convert uppercase letter to row
+                int col = lastShot[1] - '0' - 1;
+                shotBoard[col][row] = 1;
+                printShotBoard();
+                printf("\n");
+
+
+
+            }
+
 
 
 
@@ -196,6 +254,8 @@ void func(int sockfd)
                 printf("Client Exit...\n");
                 break;
             }
+
+            else {}
 
 
 
@@ -222,6 +282,7 @@ int main(int argc, char const *argv[])
     struct sockaddr_in serv_addr;
     char *hello = "Hello from client.c";
     char buffer[1024] = {0};
+    initializeBoard();
 
     /// connection stuff !
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)

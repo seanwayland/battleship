@@ -87,13 +87,10 @@ int getMessageType(char array[]) {
     } else if (strcmp(array, MISSMSG) == 0) {
         // printf("\nIt's a miss\n");
         return 5;
-    }
-    else if ((d >= '1' & d <= '9') & (c >= 'A' & c <= 'J') & (length < 4)) {
-       // printf("\nserver found It's a shot message");
-        return 9;}
-
-
-    else if ((d >= '1' & d <= '9') & (c >= '1' & c <= '9') & (length < 4)) {
+    } else if ((d >= '1' & d <= '9') & (c >= 'A' & c <= 'J') & (length < 4)) {
+        // printf("\nserver found It's a shot message");
+        return 9;
+    } else if ((d >= '1' & d <= '9') & (c >= '1' & c <= '9') & (length < 4)) {
         // printf("\nIt's a score message");
         return 6;
     } else if (strcmp(array, POSITIONMSG) == 0) {
@@ -143,7 +140,7 @@ void func(int sockfd) {
             bzero(buff, sizeof(buff));
             printf("BATTLESHIP GAME\n");
             printf("GAME STARTING\n");
-           // n = 0;
+            // n = 0;
             //while ((buff[n++] = getchar()) != '\n');
             char start[] = STARTMSG;
             write(sockfd, start, sizeof(start));
@@ -174,19 +171,17 @@ void func(int sockfd) {
             printf("\n");
 
             /// GET SHOT FROM USER AND CHECK FOR CORRECT INPUT
-            while(1) {
+            while (1) {
 
                 printf("Enter your shot!! \n(Capital letter ( A to I )  then number ( 1 to 9 ) \nEXIT to quit:  ");
                 fgets(buff, MAX, stdin);
-                if (getMessageType(buff) == 9)
-                { break ;}
-                else if (getMessageType(buff) == 8){
+                if (getMessageType(buff) == 9) { break; }
+                else if (getMessageType(buff) == 8) {
                     printf("Client Exit...\n");
                     char response[] = EXITMSG;
                     write(sockfd, response, sizeof(response));
                     break;
-                }
-                else { printf("\nIncorrect input!!\nPlease enter your shot again: "); }
+                } else { printf("\nIncorrect input!!\nPlease enter your shot again: "); }
             }
 
 
@@ -275,7 +270,7 @@ int main(int argc, char const *argv[]) {
 
 
     /// PORT is HERE taken from command argument
-    serv_addr.sin_port = htons((unsigned short)strtoul(argv[1], NULL, 0));
+    serv_addr.sin_port = htons((unsigned short) strtoul(argv[1], NULL, 0));
     //serv_addr.sin_port = htons(PORT);
 
     /// servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");

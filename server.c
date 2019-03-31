@@ -221,7 +221,6 @@ void game(int sockfd) {
             }
 
 
-
             printf("\nboard finished\n");
             sleep(1); /// maybe this helps the program not hanging when the client doesnt loop back fast enough
             char response2[] = INPOSITIONMSG;
@@ -304,7 +303,7 @@ int main(int argc, char const *argv[]) {
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     /// PORT is HERE taken from command argument
-    address.sin_port = htons((unsigned short)strtoul(argv[1], NULL, 0));
+    address.sin_port = htons((unsigned short) strtoul(argv[1], NULL, 0));
     //address.sin_port = htons(PORT);
 
     // Forcefully attaching socket to the port 8080

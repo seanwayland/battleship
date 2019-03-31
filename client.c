@@ -135,10 +135,14 @@ void func(int sockfd) {
         /// game hasn't started. server is waiting for START GAME MESSAGE
         if (gameState == 0) {
             bzero(buff, sizeof(buff));
-            printf("BATTLESHIP GAME\nEnter START GAME to start: ");
-            n = 0;
-            while ((buff[n++] = getchar()) != '\n');
-            write(sockfd, buff, sizeof(buff));
+            printf("BATTLESHIP GAME\n");
+            printf("GAME STARTING\n");
+           // n = 0;
+            //while ((buff[n++] = getchar()) != '\n');
+            char start[] = STARTMSG;
+            write(sockfd, start, sizeof(start));
+
+            //write(sockfd, buff, sizeof(buff));
             bzero(buff, sizeof(buff));
             read(sockfd, buff, sizeof(buff));
             printf("From Server : %s", buff);

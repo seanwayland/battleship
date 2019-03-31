@@ -247,10 +247,17 @@ int main(int argc, char const *argv[]) {
     memset(&serv_addr, '0', sizeof(serv_addr));
 
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
+
+
+    /// PORT is HERE taken from command argument
+    serv_addr.sin_port = htons((unsigned short)strtoul(argv[1], NULL, 0));
+    //serv_addr.sin_port = htons(PORT);
+
+    /// servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     // Convert IPv4 and IPv6 addresses from text to binary form
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+    /// the 2nd argument can be the 2nd argument of the client arguments
+    if (inet_pton(AF_INET, argv[2], &serv_addr.sin_addr) <= 0) {
         printf("\nInvalid address/ Address not supported \n");
         return -1;
     }

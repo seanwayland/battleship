@@ -287,8 +287,7 @@ int main(int argc, char const *argv[]) {
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
-    char buffer[1024] = {0};
-    char *hello = "Hello from server.c";
+
 
     // Creating socket file descriptor
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
@@ -304,7 +303,9 @@ int main(int argc, char const *argv[]) {
     }
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
+    /// PORT is HERE taken from command argument
+    address.sin_port = htons((unsigned short)strtoul(argv[1], NULL, 0));
+    //address.sin_port = htons(PORT);
 
     // Forcefully attaching socket to the port 8080
     if (bind(server_fd, (struct sockaddr *) &address,

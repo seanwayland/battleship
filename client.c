@@ -4,27 +4,14 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <string.h>
-#define PORT 8080
-#define MAX 80
-
 #include <stdio.h>
 #include <jmorecfg.h>
 #include <memory.h>
-#include <stdlib.h>
-#include <stdlib.h>
 #include <errno.h>
 #include <zconf.h>
 #include <time.h>
-
-#include <stdio.h>
-#include <sys/socket.h>
-#include <stdlib.h>
-#include <netinet/in.h>
-#include <string.h>
 #include <arpa/inet.h>
-#include <unistd.h>
-#define PORT 8080
-#define MAX 80
+
 
 #define STARTMSG "START GAME\n"
 #define POSITIONMSG "POSITIONING SHIPS\n"
@@ -32,18 +19,12 @@
 #define HITMSG "HIT\n"
 #define MISSMSG "MISS\n"
 #define EXITMSG "EXIT\n"
-#define WINMSG "WIN\n"
+#define PORT 8080
+#define MAX 80
 
 
-
-
-
-long messageType = -1;
+/// global variables for came play
 int length = 0;
-char input[256];
-boolean number = FALSE;
-char * endptr;
-int board [9][9];
 int shotBoard[9][9];
 int numShots = 0;
 int shipPlaced;
@@ -55,32 +36,31 @@ int gameState; // variable to track game position
 /// 2 is positioning ships
 /// 3 is ships in position
 /// 4 is playing game
-int n;
-//char response[MAX];
+
 
 /// set board to empty
+
 void initializeBoard() {
 
-    for ( int i = 0; i < 9 ; i ++ ) {
+    for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
-            board[i][j] = 0;
             shotBoard[i][j] = 0;
         }
     }
 
 }
 
+/// print out the shots we have tried with hits and misses
+void printShotBoard() {
+    printf("\nBOARD IS NOW");
 
-void printShotBoard(){
-    printf("\nBOARD");
-    printf("\n");
     {
         printf("\n1 is a miss, 2 is a hit, 0 is unused shot");
         printf("\n* A B C D E F G H I");
     }
-    for ( int i = 0; i < 9; i++){
+    for (int i = 0; i < 9; i++) {
         printf("\n%d", i + 1);
-        for (int j = 0; j < 9; j++){
+        for (int j = 0; j < 9; j++) {
             printf(" %d", shotBoard[i][j]);
         }
 
@@ -88,12 +68,12 @@ void printShotBoard(){
     printf("\n");
 }
 
+/// this function parses an incoming message and checks what type it is
 
 int getMessageType(char array[]) {
 
 
     length = strlen(array);
-
 
 
     char c = array[0];
@@ -102,60 +82,67 @@ int getMessageType(char array[]) {
     if (array[0] == '\0') { return 9; }
 
     else if (strcmp(array, HITMSG) == 0) {
-        printf("\nIt's a hit");
+        //printf("\nIt's a hit");
         return 4;
-    }
-
-    else if (strcmp(array, MISSMSG) == 0) {
-        printf("\nIt's a miss\n");
+    } else if (strcmp(array, MISSMSG) == 0) {
+        // printf("\nIt's a miss\n");
         return 5;
-    }
-
-    else if ((d >= '1' & d <= '9') & (c >= '1' & c <= '9') & (length < 4)) {
-        printf("\nIt's a score message");
+    } else if ((d >= '1' & d <= '9') & (c >= '1' & c <= '9') & (length < 4)) {
+        // printf("\nIt's a score message");
         return 6;
-    }
-
-
-
-
-    else if (strcmp(array, POSITIONMSG) == 0) {
-        printf("\nIt's a positioning ships message\n");
+    } else if (strcmp(array, POSITIONMSG) == 0) {
+        printf("\n");
         return 2;
-    }
-
-    else if (strcmp(array, INPOSITIONMSG) == 0) {
-        printf("\nIt's a positioning ships message\n");
+    } else if (strcmp(array, INPOSITIONMSG) == 0) {
+        printf("\n");
         return 3;
-    }
-
-    else if (strcmp(array, EXITMSG) == 0) {
-        printf("\nIt's an exit message\n");
+    } else if (strcmp(array, EXITMSG) == 0) {
+        //  printf("\nIt's an exit message\n");
         return 8;
-    }
-
-
-
-    else { return -1;}
+    } else { return -1; }
 }
 
-void func(int sockfd)
-{
+void func(int sockfd) {
     char buff[MAX];
     int n;
     for (;;) {
 
-        if (gameState == 0)
-        {
+        /// at this point we are waiting for the server to set the ships up
+
+        if (gameState == 1) {
+
+
+            read(sockfd, buff, sizeof(buff));
+            printf("From Server : %s", buff);
+            int type = getMessageType(buff);
+            /// we receive a game ready message then we can play
+            if (type == 3) {
+                printf("\nGame Ready ... \n");
+                gameState = 2;
+                bzero(buff, sizeof(buff));
+            } else if (type == 8 || type < 0) {
+                printf("Client Exit...\n");
+                break;
+            }
+                /// if we get a positioning ships message clear the buffer
+            else if (type == 2) {
+
+                bzero(buff, sizeof(buff));
+            } else {}
+
+        }
+
+        /// game hasn't started. server is waiting for START GAME MESSAGE
+        if (gameState == 0) {
             bzero(buff, sizeof(buff));
-            printf("Enter the string : ");
+            printf("BATTLESHIP GAME\nEnter START GAME to start: ");
             n = 0;
             while ((buff[n++] = getchar()) != '\n');
             write(sockfd, buff, sizeof(buff));
             bzero(buff, sizeof(buff));
             read(sockfd, buff, sizeof(buff));
             printf("From Server : %s", buff);
-            gameState = 1;
+            gameState = 1; /// if we get a message back from server then the game has "started"
             int type = getMessageType(buff);
             if (type == 8 || type < 0) {
                 printf("Client Exit...\n");
@@ -166,45 +153,20 @@ void func(int sockfd)
 
         }
 
-        if (gameState == 1)
-        {
-
-           // write(sockfd, buff, sizeof(buff));
-           // bzero(buff, sizeof(buff));
-            read(sockfd, buff, sizeof(buff));
-            printf("From Server : %s", buff);
-            int type = getMessageType(buff);
-            if (type == 3) {
-                printf("\nGame Ready ... \n");
-                gameState = 2;
-                bzero(buff, sizeof(buff));
-            }
-            else if (type == 8 || type < 0) {
-                printf("Client Exit...\n");
-                break;
-            }
-            else if (type == 2) {
-
-                //gameState = 1;
-                bzero(buff, sizeof(buff));
-            }
-
-            else { }
-
-        }
 
 
-        else if (gameState == 2)
-        {
-            //write(sockfd, buff, sizeof(buff));
+
+
+            /// at this point the game has started and we can make shots
+        else if (gameState == 2) {
+
             bzero(buff, sizeof(buff));
             printf("\n");
-            printf("Enter the string : ");
+            printf("Enter your shot!! \n(Capital letter ( A to I )  then number ( 1 to 9 ) \nEXIT to quit:  ");
             n = 0;
             while ((buff[n++] = getchar()) != '\n');
             write(sockfd, buff, sizeof(buff));
             strncpy(lastShot, buff, MAX);
-
 
 
             bzero(buff, sizeof(buff));
@@ -215,11 +177,11 @@ void func(int sockfd)
             int type = getMessageType(buff);
             if (type == 6) {
                 printf("\nyou win ... \n");
-                printf("\nscore is  ... %s ", buff );
+                printf("\nscore is  ... %s ", buff);
                 printf("Client Exit...\n");
                 char response[] = EXITMSG;
                 write(sockfd, response, sizeof(response));
-                //break;
+
             }
 
             if (type == 4) {
@@ -231,10 +193,10 @@ void func(int sockfd)
                 shotBoard[col][row] = 2;
                 printShotBoard();
 
-                }
+            }
 
 
-            if (type == 5 ) {
+            if (type == 5) {
                 /// miss
                 /// store on shotBoard
                 int row = lastShot[0] - 64 - 1; // convert uppercase letter to row
@@ -244,22 +206,13 @@ void func(int sockfd)
                 printf("\n");
 
 
-
             }
-
-
 
 
             if (type == 8 || type < 0) {
                 printf("Client Exit...\n");
                 break;
-            }
-
-            else {}
-
-
-
-
+            } else {}
 
         }
 
@@ -267,8 +220,7 @@ void func(int sockfd)
 }
 
 
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]) {
 
     gameState = 0; // starting !!
 
@@ -280,13 +232,10 @@ int main(int argc, char const *argv[])
     struct sockaddr_in address;
     int sock = 0, valread;
     struct sockaddr_in serv_addr;
-    char *hello = "Hello from client.c";
-    char buffer[1024] = {0};
     initializeBoard();
 
     /// connection stuff !
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    {
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         printf("\n Socket creation error \n");
         return -1;
     }
@@ -297,14 +246,12 @@ int main(int argc, char const *argv[])
     serv_addr.sin_port = htons(PORT);
 
     // Convert IPv4 and IPv6 addresses from text to binary form
-    if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0)
-    {
+    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
         printf("\nInvalid address/ Address not supported \n");
         return -1;
     }
 
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    {
+    if (connect(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         printf("\nConnection Failed \n");
         return -1;
     }
@@ -312,19 +259,12 @@ int main(int argc, char const *argv[])
 
     /// MAIN LOOPS
 
-    // function for chat
+    /// function for game
     func(sock);
 
-    // close the socket
+    /// close the socket when we break out of main loop
     close(sock);
 
 
-    /***
-    send(sock , hello , strlen(hello) , 0 );
-    printf("Hello message sent from client\n");
-    valread = read( sock , buffer, 1024);
-    printf("%s\n",buffer );
-
-     ***/
     return 0;
 }

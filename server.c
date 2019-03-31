@@ -4,13 +4,8 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <string.h>
-#define PORT 8080
-#define MAX 80
-
-#include <stdio.h>
 #include <jmorecfg.h>
 #include <memory.h>
-#include <stdlib.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <zconf.h>
@@ -22,81 +17,44 @@
 #define HITMSG "HIT\n"
 #define MISSMSG "MISS\n"
 #define EXITMSG "EXIT\n"
+#define PORT 8080
+#define MAX 80
 
 
-
-
-
-long messageType = -1;
 int length = 0;
-char input[256];
-boolean number = FALSE;
-char * endptr;
-int board [9][9];
-int shotBoard[9][9];
+int board[9][9];
 int numShots = 0;
 int shipPlaced;
 char buff[MAX];
-int playStage = 0;
-int n;
-//char response[MAX];
 
-
-
-// Function designed for chat between client and server.
-
+/// check for a win !!!
 
 int scanBoard() {
     int result = 1;
-    for ( int i = 0; i < 9 ; i ++ ){
-        for ( int j = 0 ; j < 9 ; j++)
-            if (board[i][j] != 0){
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++)
+            if (board[i][j] != 0) {
                 result = 0;
             }
     }
     return result;
 }
 
-void printShotBoard(){
-    printf("\nBOARD");
-    printf("\n");
+
+/// check a shot for a hit or a miss and update the board
+int shoot() {
     {
-        printf("\n* A B C D E F G H I");
-    }
-    for ( int i = 0; i < 9; i++){
-        printf("\n%d", i + 1);
-        for (int j = 0; j < 9; j++){
-            printf(" %d", shotBoard[i][j]);
-        }
-
-    }
-}
-
-int shoot(){
-     {
         int row = buff[0] - 64 - 1; // convert uppercase letter to row
-        //printf("\nrow %d", row);
         int col = buff[1] - '0' - 1;
-        //printf("\ncol %d", col);
-
         if (board[col][row] > 0) {
             board[col][row] = 0;
             printf("\nHIT");
-            //shotBoard[col][row] = 2;
-            //printShotBoard();
             return 1;
-
-
         } else {
             printf("\nMISS");
-            //shotBoard[col][row] = 1;
-            //printShotBoard();
             return 2;
         }
-
-
     }
-
 
 
 }
@@ -112,21 +70,23 @@ int shoot(){
  *
  */
 
-void printBoard(){
+void printBoard() {
     printf("\nBOARD");
     printf("\n");
     {
         printf("\n* A B C D E F G H I");
     }
-    for ( int i = 0; i < 9; i++){
+    for (int i = 0; i < 9; i++) {
         printf("\n%d", i + 1);
-        for (int j = 0; j < 9; j++){
+        for (int j = 0; j < 9; j++) {
             printf(" %d", board[i][j]);
         }
 
     }
 }
 
+
+/// check an incoming message for it's type
 int getMessageType(char array[]) {
 
 
@@ -135,53 +95,40 @@ int getMessageType(char array[]) {
     char c = array[0];
     char d = array[1];
 
-    if ( array[0] == '\0') { return 9;}
+    if (array[0] == '\0') { return 9; }
 
     else if (strcmp(array, STARTMSG) == 0) {
         printf("\nserver found It's a start message");
         return 1;
-    }
-
-
-    else if (strcmp(array, EXITMSG) == 0) {
+    } else if (strcmp(array, EXITMSG) == 0) {
         printf("\nserver found It's an exit message");
         return 8;
-    }
-
-
-    else if ((d >= '1' & d <= '9') & (c >= 'A' & c <= 'J') & (length < 4)) {
+    } else if ((d >= '1' & d <= '9') & (c >= 'A' & c <= 'J') & (length < 4)) {
         printf("\nserver found It's a shot message");
         return 6;
 
-    }
-
-    else if (strcmp(array, "") == 0)
-    {
+    } else if (strcmp(array, "") == 0) {
         return 9;
-    }
-
-    else { return -1;}
+    } else { return -1; }
 }
 
 
 /// set board to empty
 void initializeBoard() {
 
-    for ( int i = 0; i < 9 ; i ++ ) {
+    for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
             board[i][j] = 0;
-            //shotBoard[i][j] = 0;
+
         }
     }
 
 }
 
 
-
-
 /// stick a ship on the board
 /// returns a one when finished
-int placeShip(int size){
+int placeShip(int size) {
     int result = 0;
     int direction = rand() & 1; // 0 is vertical 1 is horizontal
     /// horizontal is a row
@@ -189,44 +136,44 @@ int placeShip(int size){
     /// a horizontal row is represented by [x][0] [x][1] [x][2] [x][3] ..
     /// a vertical column is represented by [0][y] [1][y] [2][y]
     int rowColNumber = rand() % 9; // generate random row or column number
-    int pos = rand() % 9 ; // generate random position
+    int pos = rand() % 9; // generate random position
 
     /// if it's horizontal check the row for space
-    if (direction == 1){
+    if (direction == 1) {
         /// if row doesn't have space for ship beyond position reset
-        if ((8 - pos)  < size ) {
+        if ((8 - pos) < size) {
             pos = 8 - size;
         }
         /// check for free space
         int freeSpace = 0;
-        for ( int j = 0 ; j < size ; j ++){
-            freeSpace = freeSpace +  board[rowColNumber][pos + j];
+        for (int j = 0; j < size; j++) {
+            freeSpace = freeSpace + board[rowColNumber][pos + j];
         }  /// if there is enough space then place ship
         if (freeSpace == 0) {
-            for ( int j = 0 ; j < size ; j ++){
-                board[rowColNumber][pos + j] = size ;
+            for (int j = 0; j < size; j++) {
+                board[rowColNumber][pos + j] = size;
             }
             result = 1; /// ship has been placed
-            //printf("\nShip Placed, size is %d direction is %d ", size, direction);
+
         }
     }
 
     /// if it's vertical check the column for space
-    if (direction == 0){
+    if (direction == 0) {
         /// if column doesn't have space for ship beyond position reset
-        if ((8 - pos)  < size ) {
+        if ((8 - pos) < size) {
             pos = 8 - size;
         }
         int freeSpace = 0;
-        for ( int j = 0 ; j < size ; j ++){
-            freeSpace = freeSpace +  board[pos + j][rowColNumber];
+        for (int j = 0; j < size; j++) {
+            freeSpace = freeSpace + board[pos + j][rowColNumber];
         }  /// if there is enough space then place ship
         if (freeSpace == 0) {
-            for ( int j = 0 ; j < size ; j ++){
-                board[pos+j][rowColNumber] = size ;
+            for (int j = 0; j < size; j++) {
+                board[pos + j][rowColNumber] = size;
             }
             result = 1; /// ship has been placed
-            //printf("\nShip Placed, size is %d direction is %d ", size, direction);
+
         }
     }
 
@@ -234,9 +181,7 @@ int placeShip(int size){
 }
 
 
-
-void func(int sockfd)
-{
+void game(int sockfd) {
 
     // infinite loop for chat
     for (;;) {
@@ -248,16 +193,8 @@ void func(int sockfd)
         int type = getMessageType(buff);
         printf("From client: %s\t To client : ", buff);
 
-        n = 0;
-        //bzero(buff, sizeof(buff));
-        // copy server message in the buffer
 
-
-        // and send that buffer to client
-        //write(sockfd, buff, sizeof(buff));
-
-
-        if (type == 8 || type < 0 ) {
+        if (type == 8 || type < 0) {
             printf("Server Exit...\n");
 
             char die[] = EXITMSG;
@@ -266,7 +203,8 @@ void func(int sockfd)
             break;
         }
 
-        else if ( type == 1){
+            /// if we recieve a start message set the board up
+        else if (type == 1) {
 
             srand(time(0));
             printf("\ninitializing board");
@@ -274,34 +212,36 @@ void func(int sockfd)
             char response[] = POSITIONMSG;
             write(sockfd, response, sizeof(response));
             bzero(buff, MAX);
-            for ( int i = 2; i < 6; i ++) {
+            for (int i = 2; i < 6; i++) {
                 shipPlaced = 0;
                 // place a ship of size 2
                 while (shipPlaced == 0) {
                     shipPlaced = placeShip(i);
                 }
             }
+
+
+
             printf("\nboard finished\n");
+            sleep(1); /// maybe this helps the program not hanging when the client doesnt loop back fast enough
             char response2[] = INPOSITIONMSG;
             write(sockfd, response2, sizeof(response2));
             bzero(buff, MAX);
 
         }
 
-        else if ( type == 6){
 
-
-
-
+            /// if we recieve a shot message deal with it
+        else if (type == 6) {
 
             printf("\nchecking shot\n");
             int shot = shoot();
 
-            if (shot == 1  ) {
-                numShots ++;
+            if (shot == 1) {
+                numShots++;
                 int win = scanBoard();
-                if (win == 1 ){
-                    numShots ++;
+                if (win == 1) {
+                    numShots++;
                     char response6[MAX];
                     sprintf(response6, "%d", numShots);
 
@@ -311,40 +251,28 @@ void func(int sockfd)
                     printf("Server Exit...\n");
 
 
-
                 }
                 char response3[] = HITMSG;
                 write(sockfd, response3, sizeof(response3));
                 printBoard();
-            }
-
-            else if (shot == 2 ) {
+            } else if (shot == 2) {
                 numShots++;
                 char response2[] = MISSMSG;
                 write(sockfd, response2, sizeof(response2));
                 printBoard();
-            }
-
-            else {
+            } else {
                 printf("Server Exit...\n");
                 char die[] = EXITMSG;
                 write(sockfd, die, sizeof(die));
 
             }
 
-
-
-
         }
-
-
-
 
         bzero(buff, sizeof(buff));
 
     }
 }
-
 
 
 /*** basic connection stuff from here :
@@ -353,8 +281,7 @@ void func(int sockfd)
  * https://www.geeksforgeeks.org/socket-programming-cc/
  */
 
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]) {
     initializeBoard();
     int server_fd, new_socket, valread;
     struct sockaddr_in address;
@@ -364,38 +291,33 @@ int main(int argc, char const *argv[])
     char *hello = "Hello from server.c";
 
     // Creating socket file descriptor
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
-    {
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         perror("socket failed");
         exit(EXIT_FAILURE);
     }
 
     // Forcefully attaching socket to the port 8080
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-                   &opt, sizeof(opt)))
-    {
+                   &opt, sizeof(opt))) {
         perror("setsockopt");
         exit(EXIT_FAILURE);
     }
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons( PORT );
+    address.sin_port = htons(PORT);
 
     // Forcefully attaching socket to the port 8080
-    if (bind(server_fd, (struct sockaddr *)&address,
-             sizeof(address))<0)
-    {
+    if (bind(server_fd, (struct sockaddr *) &address,
+             sizeof(address)) < 0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
-    if (listen(server_fd, 3) < 0)
-    {
+    if (listen(server_fd, 3) < 0) {
         perror("listen");
         exit(EXIT_FAILURE);
     }
-    if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
-                             (socklen_t*)&addrlen))<0)
-    {
+    if ((new_socket = accept(server_fd, (struct sockaddr *) &address,
+                             (socklen_t *) &addrlen)) < 0) {
         perror("accept");
         exit(EXIT_FAILURE);
     }
@@ -403,19 +325,12 @@ int main(int argc, char const *argv[])
 
     /// MAIN LOOPS
 
-    // function for chat
-    func(new_socket);
+    // function for game
+    game(new_socket);
 
     // close the socket
     close(new_socket);
 
-    /***
 
-    valread = read( new_socket , buffer, 1024);
-    printf("%s\n",buffer );
-    send(new_socket , hello , strlen(hello) , 0 );
-    printf("Hello message sent from server\n");
-
-     ***/
     return 0;
 }
